@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.dashboard;
+
+public class dashboardController {
+
+}

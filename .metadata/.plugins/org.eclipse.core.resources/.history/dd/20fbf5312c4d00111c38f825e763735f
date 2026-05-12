@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.ticket;
+
+public class TicketService {
+
+}

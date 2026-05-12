@@ -1,0 +1,17 @@
+# Placeholder for Azure deployment
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USER}
+spring.datasource.password=${DB_PASSWORD}
+spring.datasource.hikari.maximum-pool-size=20
+
+spring.data.redis.host=${REDIS_HOST}
+spring.data.redis.port=${REDIS_PORT:6380}
+spring.data.redis.ssl.enabled=true
+spring.data.redis.password=${REDIS_PASSWORD}
+
+storage.provider=azure-blob
+
+notification.provider=smtp
+notification.from-email=${NOTIFICATION_FROM_EMAIL}
+
+app.jwt.secret=${JWT_SECRET}

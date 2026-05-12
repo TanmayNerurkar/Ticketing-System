@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.audit;
+
+public class TicketHistoryRepository {
+
+}

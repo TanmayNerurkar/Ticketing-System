@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<libraryInfos>
+    <libraryInfo home="C:\Users\Tanmay\.p2\pool\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_23.0.0.v20240919-1706\jre" version="23"/>
+    <libraryInfo home="C:\Program Files\Java\jre1.8.0_111" version="1.8.0_111">
+        <bootpath>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\resources.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\rt.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\sunrsasign.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\jsse.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\jce.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\charsets.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\jfr.jar"/>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\classes"/>
+        </bootpath>
+        <extensionDirs>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\ext"/>
+            <entry path="C:\WINDOWS\Sun\Java\lib\ext"/>
+        </extensionDirs>
+        <endorsedDirs>
+            <entry path="C:\Program Files\Java\jre1.8.0_111\lib\endorsed"/>
+        </endorsedDirs>
+    </libraryInfo>
+    <libraryInfo home="C:\Program Files\Eclipse Adoptium\jdk-21.0.11.10-hotspot" version="21.0.11"/>
+    <libraryInfo home="C:\Users\Tanmay\.p2\pool\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_23.0.0.v20240919-1706" version="23">
+        <bootpath>
+            <entry path="null"/>
+        </bootpath>
+        <extensionDirs>
+            <entry path="null"/>
+        </extensionDirs>
+        <endorsedDirs>
+            <entry path="null"/>
+        </endorsedDirs>
+    </libraryInfo>
+</libraryInfos>

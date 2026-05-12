@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.category;
+
+public class Category {
+
+}

@@ -1,0 +1,53 @@
+# ==========================================
+# ROOT
+# ==========================================
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# IDE FILES
+# ==========================================
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# ==========================================
+# JAVA / SPRING BOOT
+# ==========================================
+ticketing-backend/target/
+ticketing-backend/*.log
+
+# Maven wrapper jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot sensitive files
+ticketing-backend/src/main/resources/application.properties
+ticketing-backend/src/main/resources/application.yml
+ticketing-backend/src/main/resources/application-local.properties
+ticketing-backend/src/main/resources/application-prod.properties
+ticketing-backend/src/main/resources/application-azure.properties
+
+# ==========================================
+# REACT / VITE
+# ==========================================
+Ticketing-Service-FrontEnd/node_modules/
+Ticketing-Service-FrontEnd/dist/
+
+# Environment files
+Ticketing-Service-FrontEnd/.env
+Ticketing-Service-FrontEnd/.env.*
+!Ticketing-Service-FrontEnd/.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# CACHE FILES
+# ==========================================
+.cache/
+.temp/

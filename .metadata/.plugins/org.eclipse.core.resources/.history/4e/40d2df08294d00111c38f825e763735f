@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.user;
+
+public class UserController {
+
+}

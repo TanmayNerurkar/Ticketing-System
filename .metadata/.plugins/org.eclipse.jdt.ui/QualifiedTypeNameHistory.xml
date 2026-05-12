@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.StartupHook"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.assignment.WorkloadTracker"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.ticket.SlaMonitorJob"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.notification.GraphNotificationSender"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.notification.events.SlaBreachedEvent"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.notification.SlaBreachHandler"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.notification.NotificationWorker"/>
+    <fullyQualifiedTypeName name="com.lifeline.ticketing.notification.SmtpNotificationSender"/>
+</qualifiedTypeNameHistroy>

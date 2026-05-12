@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.auth;
+
+public class AuthController {
+
+}

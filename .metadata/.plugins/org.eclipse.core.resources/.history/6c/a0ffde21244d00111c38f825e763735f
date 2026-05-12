@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.common.exception;
+
+public class ResourceNotFoundException {
+
+}

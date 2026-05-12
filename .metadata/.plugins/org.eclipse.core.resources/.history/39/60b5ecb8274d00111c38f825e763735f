@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.organization;
+
+public class OrganizationController {
+
+}

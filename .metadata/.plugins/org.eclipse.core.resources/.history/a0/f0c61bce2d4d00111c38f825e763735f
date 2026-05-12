@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.assignment;
+
+public class StartupHook {
+
+}

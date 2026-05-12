@@ -1,0 +1,5 @@
+package com.lifeline.ticketing.technician;
+
+public class TechnicianDto {
+
+}
