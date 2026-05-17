@@ -18,3 +18,21 @@ export const logout = async () => {
     clearToken();
   }
 };
+
+export const changePassword = (currentPassword, newPassword) =>
+  apiFetch('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+
+export const forgotPassword = (email) =>
+  apiFetch('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+
+export const resetPassword = (token, newPassword) =>
+  apiFetch('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  });

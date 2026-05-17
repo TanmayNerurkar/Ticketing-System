@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { Stethoscope } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -81,6 +81,12 @@ export default function LoginPage() {
               Sign in
             </Button>
 
+            <Link
+              to="/forgot-password"
+              className="block text-center text-sm text-stone-600 hover:text-stone-900"
+            >
+              Forgot password?
+            </Link>
 
           </div>
         </form>
