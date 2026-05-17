@@ -4,9 +4,8 @@ import {
   Ticket,
   Plus,
   Users,
-  Building2,
+  KeyRound,
   Stethoscope,
-  Settings,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ROLES } from '../../lib/constants';
@@ -28,6 +27,7 @@ export default function Sidebar() {
   const adminNav = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/tickets', label: 'All tickets', icon: Ticket },
+    { to: '/admin/users', label: 'Users', icon: Users },
   ];
 
   const items =
@@ -36,6 +36,11 @@ export default function Sidebar() {
       : user?.role === ROLES.ADMIN
       ? adminNav
       : staffNav;
+
+  const linkClass = ({ isActive }) =>
+    `w-full flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors ${
+      isActive ? 'bg-stone-900 text-stone-50' : 'text-stone-700 hover:bg-stone-200'
+    }`;
 
   return (
     <aside className="w-60 bg-stone-100 border-r border-stone-200 flex flex-col h-screen sticky top-0">
@@ -59,18 +64,7 @@ export default function Sidebar() {
         {items.map((item) => {
           const Icon = item.icon;
           return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `w-full flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors ${
-                  isActive
-                    ? 'bg-stone-900 text-stone-50'
-                    : 'text-stone-700 hover:bg-stone-200'
-                }`
-              }
-            >
+            <NavLink key={item.to} to={item.to} end={item.end} className={linkClass}>
               <Icon size={15} strokeWidth={2} />
               {item.label}
             </NavLink>
@@ -78,7 +72,11 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t border-stone-200">
+      <div className="p-3 border-t border-stone-200 space-y-0.5">
+        <NavLink to="/change-password" className={linkClass}>
+          <KeyRound size={15} strokeWidth={2} />
+          Change password
+        </NavLink>
         <div className="text-[10px] text-stone-500 uppercase tracking-widest px-3 py-1">
           {user?.role}
         </div>
