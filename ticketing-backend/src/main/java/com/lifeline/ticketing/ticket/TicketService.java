@@ -5,10 +5,12 @@ import com.lifeline.ticketing.audit.TicketHistoryService;
 import com.lifeline.ticketing.category.Category;
 import com.lifeline.ticketing.category.CategoryRepository;
 import com.lifeline.ticketing.common.exception.ResourceNotFoundException;
+import com.lifeline.ticketing.common.exception.ValidationException;
 import com.lifeline.ticketing.common.security.AuthenticatedUser;
 import com.lifeline.ticketing.user.User;
 import com.lifeline.ticketing.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,148 +26,237 @@ import java.util.UUID;
 
 import static com.lifeline.ticketing.ticket.TicketSpecifications.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TicketService {
 
-    private final TicketRepository ticketRepository;
-    private final UserRepository userRepository;
-    private final CategoryRepository categoryRepository;
-    private final AssignmentService assignmentService;
-    private final TicketHistoryService historyService;
+	private final TicketRepository ticketRepository;
+	private final UserRepository userRepository;
+	private final CategoryRepository categoryRepository;
+	private final AssignmentService assignmentService;
+	private final TicketHistoryService historyService;
 
-    @Transactional(readOnly = true)
-    public Page<TicketSummary> list(AuthenticatedUser caller, TicketFilters filters, Pageable pageable) {
-        Specification<Ticket> spec = Specification.where(notDeleted())
-                .and(hasStatus(filters.status()))
-                .and(hasPriority(filters.priority()))
-                .and(textSearch(filters.search()));
+	@Transactional(readOnly = true)
+	public Page<TicketSummary> list(AuthenticatedUser caller, TicketFilters filters, Pageable pageable) {
+		Specification<Ticket> spec = Specification.where(notDeleted())
+				.and(hasStatus(filters.status()))
+				.and(hasPriority(filters.priority()))
+				.and(textSearch(filters.search()));
 
-        if ("CLIENT".equals(caller.role())) {
-            spec = spec.and(belongsToOrg(caller.organizationId()));
-        }
-        if (filters.assigneeId() != null) {
-            spec = spec.and(assignedTo(filters.assigneeId()));
-        }
+		if ("CLIENT".equals(caller.role())) {
+			spec = spec.and(belongsToOrg(caller.organizationId()));
+		}
+		if (filters.assigneeId() != null) {
+			spec = spec.and(assignedTo(filters.assigneeId()));
+		}
 
-        return ticketRepository.findAll(spec, pageable).map(TicketSummary::from);
-    }
+		return ticketRepository.findAll(spec, pageable).map(TicketSummary::from);
+	}
 
-    @Transactional(readOnly = true)
-    public TicketDto get(UUID id, AuthenticatedUser caller) {
-        Ticket ticket = ticketRepository.findWithRelationsById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-        enforceCanView(ticket, caller);
-        return TicketDto.from(ticket);
-    }
+	@Transactional(readOnly = true)
+	public TicketDto get(UUID id, AuthenticatedUser caller) {
+		Ticket ticket = ticketRepository.findWithRelationsById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+		enforceCanView(ticket, caller);
+		return TicketDto.from(ticket);
+	}
 
-    @Transactional
-    public TicketDto create(CreateTicketRequest request, AuthenticatedUser caller) {
-        User reporter = userRepository.findById(caller.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("Reporter not found"));
+	@Transactional
+	public TicketDto create(CreateTicketRequest request, AuthenticatedUser caller) {
+		User reporter = userRepository.findById(caller.userId())
+				.orElseThrow(() -> new ResourceNotFoundException("Reporter not found"));
 
-        Category category = categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+		Category category = categoryRepository.findById(request.categoryId())
+				.orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-        Ticket ticket = new Ticket();
-        ticket.setTicketNumber(generateTicketNumber());
-        ticket.setOrganization(reporter.getOrganization());
-        ticket.setReporter(reporter);
-        ticket.setCategory(category);
-        ticket.setSubcategory(request.subcategory());
-        ticket.setDescription(request.description());
-        ticket.setTitle(buildTitle(request));
-        ticket.setBlockingWork(request.blockingWork());
-        ticket.setAffectsOthers(request.affectsOthers());
-        ticket.setNoticedAt(request.noticedAt());
-        ticket.setBestContactTime(request.bestContactTime() != null
-                ? request.bestContactTime() : Ticket.ContactTime.ANYTIME);
-        ticket.setPriority(computePriority(request));
-        ticket.setSlaDueAt(computeSlaDueAt(ticket.getPriority()));
+		Ticket ticket = new Ticket();
+		ticket.setTicketNumber(generateTicketNumber());
+		ticket.setOrganization(reporter.getOrganization());
+		ticket.setReporter(reporter);
+		ticket.setCategory(category);
+		ticket.setSubcategory(request.subcategory());
+		ticket.setDescription(request.description());
+		ticket.setTitle(buildTitle(request));
+		ticket.setBlockingWork(request.blockingWork());
+		ticket.setAffectsOthers(request.affectsOthers());
+		ticket.setNoticedAt(request.noticedAt());
+		ticket.setBestContactTime(
+				request.bestContactTime() != null ? request.bestContactTime() : Ticket.ContactTime.ANYTIME);
+		ticket.setPriority(computePriority(request));
+		ticket.setSlaDueAt(computeSlaDueAt(ticket.getPriority()));
 
-        ticket = ticketRepository.save(ticket);
+		ticket = ticketRepository.save(ticket);
 
-        // Auto-assign
-        Optional<User> assignee = assignmentService.autoAssign(ticket);
-        if (assignee.isPresent()) {
-            ticket.setAssignee(assignee.get());
-            ticket.setStatus(TicketStatus.ASSIGNED);
-            historyService.recordAssignment(ticket, assignee.get());
-        }
+		// Auto-assign
+		Optional<User> assignee = assignmentService.autoAssign(ticket);
+		if (assignee.isPresent()) {
+			ticket.setAssignee(assignee.get());
+			ticket.setStatus(TicketStatus.ASSIGNED);
+			historyService.recordAssignment(ticket, assignee.get());
+		}
 
-        historyService.recordCreated(ticket);
-        return TicketDto.from(ticket);
-    }
+		historyService.recordCreated(ticket);
+		return TicketDto.from(ticket);
+	}
 
-    @CacheEvict(value = "tickets", key = "#id")
-    @Transactional
-    public TicketDto update(UUID id, UpdateTicketRequest request, AuthenticatedUser caller) {
-        Ticket ticket = ticketRepository.findWithRelationsById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
-        enforceCanEdit(ticket, caller);
+	@CacheEvict(value = "tickets", key = "#id")
+	@Transactional
+	public TicketDto update(UUID id, UpdateTicketRequest request, AuthenticatedUser caller) {
+		Ticket ticket = ticketRepository.findWithRelationsById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+		enforceCanEdit(ticket, caller);
 
-        TicketStatus oldStatus = ticket.getStatus();
+		TicketStatus oldStatus = ticket.getStatus();
 
-        if (request.status() != null && request.status() != oldStatus) {
-            ticket.setStatus(request.status());
-            if (request.status() == TicketStatus.RESOLVED) {
-                ticket.setResolvedAt(Instant.now());
-                ticket.setResolutionNotes(request.resolutionNotes());
-                if (ticket.getAssignee() != null) {
-                    assignmentService.markResolved(ticket.getAssignee().getId());
-                }
-            }
-            historyService.recordStatusChange(ticket, oldStatus, request.status(), caller);
-        }
+		if (request.status() != null && request.status() != oldStatus) {
+			ticket.setStatus(request.status());
+			if (request.status() == TicketStatus.RESOLVED) {
+				ticket.setResolvedAt(Instant.now());
+				ticket.setResolutionNotes(request.resolutionNotes());
+				if (ticket.getAssignee() != null) {
+					assignmentService.markResolved(ticket.getAssignee().getId());
+				}
+			}
+			historyService.recordStatusChange(ticket, oldStatus, request.status(), caller);
+		}
 
-        if (request.priority() != null) {
-            ticket.setPriority(request.priority());
-            ticket.setSlaDueAt(computeSlaDueAt(request.priority()));
-        }
+		if (request.priority() != null) {
+			ticket.setPriority(request.priority());
+			ticket.setSlaDueAt(computeSlaDueAt(request.priority()));
+		}
 
-        return TicketDto.from(ticket);
-    }
+		return TicketDto.from(ticket);
+	}
 
-    // ---- helpers ----
+	@CacheEvict(value = "tickets", key = "#ticketId")
+	@Transactional
+	public TicketDto reopen(UUID ticketId, ReopenTicketRequest request, AuthenticatedUser caller) {
+		Ticket ticket = ticketRepository.findWithRelationsById(ticketId)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
 
-    private String generateTicketNumber() {
-        Long seq = ticketRepository.getNextSequence();
-        return String.format("TKT-%d-%05d", java.time.Year.now().getValue(), seq);
-    }
+		// Only the reporter or an admin can reopen
+		boolean isAdmin = "ADMIN".equals(caller.role());
+		boolean isReporter = ticket.getReporter() != null
+				&& ticket.getReporter().getId().equals(caller.userId());
+		if (!isAdmin && !isReporter) {
+			throw new AccessDeniedException("Only the reporter or an admin can reopen a ticket");
+		}
 
-    private TicketPriority computePriority(CreateTicketRequest req) {
-        if (req.blockingWork() && req.affectsOthers()) return TicketPriority.CRITICAL;
-        if (req.blockingWork()) return TicketPriority.HIGH;
-        if (req.affectsOthers()) return TicketPriority.MEDIUM;
-        return TicketPriority.LOW;
-    }
+		// Must currently be resolved or closed
+		if (!TicketStatus.RESOLVED.equals(ticket.getStatus())
+				&& !TicketStatus.CLOSED.equals(ticket.getStatus())) {
+			throw new ValidationException("Only resolved or closed tickets can be reopened");
+		}
 
-    private Instant computeSlaDueAt(TicketPriority p) {
-        long hours = switch (p) {
-            case CRITICAL -> 2;
-            case HIGH -> 8;
-            case MEDIUM -> 24;
-            case LOW -> 72;
-        };
-        return Instant.now().plus(hours, ChronoUnit.HOURS);
-    }
+		TicketStatus oldStatus = ticket.getStatus();
 
-    private String buildTitle(CreateTicketRequest req) {
-        String firstLine = req.description().split("\\.")[0].trim();
-        return firstLine.length() > 100 ? firstLine.substring(0, 97) + "..." : firstLine;
-    }
+		// Append the reopen reason to resolution notes for audit trail
+		String existingNotes = ticket.getResolutionNotes() == null ? "" : ticket.getResolutionNotes();
+		ticket.setResolutionNotes(existingNotes
+				+ "\n\n[Reopened by " + caller.email() + " on " + Instant.now() + "]\n"
+				+ request.reason());
 
-    private void enforceCanView(Ticket ticket, AuthenticatedUser caller) {
-        if ("CLIENT".equals(caller.role())
-                && !ticket.getOrganization().getId().equals(caller.organizationId())) {
-            throw new AccessDeniedException("Cannot view this ticket");
-        }
-    }
+		// Go back to ASSIGNED if there's an assignee, otherwise OPEN
+		TicketStatus newStatus = ticket.getAssignee() != null
+				? TicketStatus.ASSIGNED
+				: TicketStatus.OPEN;
+		ticket.setStatus(newStatus);
+		ticket.setResolvedAt(null);
 
-    private void enforceCanEdit(Ticket ticket, AuthenticatedUser caller) {
-        if ("CLIENT".equals(caller.role())
-                && !ticket.getReporter().getId().equals(caller.userId())) {
-            throw new AccessDeniedException("Cannot edit this ticket");
-        }
-    }
+		historyService.recordStatusChange(ticket, oldStatus, newStatus, caller);
+
+		log.info("Ticket {} reopened by {} (was: {}, now: {})",
+				ticket.getId(), caller.email(), oldStatus, newStatus);
+
+		return TicketDto.from(ticket);
+	}
+
+	@CacheEvict(value = "tickets", key = "#ticketId")
+	@Transactional
+	public TicketDto reassign(UUID ticketId, AssignTicketRequest request, AuthenticatedUser caller) {
+		// Admin only
+		if (!"ADMIN".equals(caller.role())) {
+			throw new AccessDeniedException("Only admins can reassign tickets");
+		}
+
+		Ticket ticket = ticketRepository.findWithRelationsById(ticketId)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+
+		if (TicketStatus.RESOLVED.equals(ticket.getStatus())
+				|| TicketStatus.CLOSED.equals(ticket.getStatus())) {
+			throw new ValidationException("Cannot reassign a resolved or closed ticket. Reopen it first.");
+		}
+
+		if (request.technicianId() == null) {
+			// Unassign
+			ticket.setAssignee(null);
+			ticket.setStatus(TicketStatus.OPEN);
+			log.info("Ticket {} unassigned by {}", ticket.getId(), caller.email());
+		} else {
+			User newAssignee = userRepository.findById(request.technicianId())
+					.orElseThrow(() -> new ResourceNotFoundException("Technician not found"));
+			if (!"TECHNICIAN".equals(newAssignee.getRole().name())
+					&& !"MANAGER".equals(newAssignee.getRole().name())) {
+				throw new ValidationException("Can only assign tickets to technicians or managers");
+			}
+			if (!newAssignee.isActive()) {
+				throw new ValidationException("Cannot assign tickets to a deactivated user");
+			}
+			ticket.setAssignee(newAssignee);
+			if (TicketStatus.OPEN.equals(ticket.getStatus())) {
+				ticket.setStatus(TicketStatus.ASSIGNED);
+			}
+			log.info("Ticket {} reassigned to {} by {}",
+					ticket.getId(), newAssignee.getEmail(), caller.email());
+		}
+
+		return TicketDto.from(ticket);
+	}
+
+	// ---- helpers ----
+
+	private String generateTicketNumber() {
+		Long seq = ticketRepository.getNextSequence();
+		return String.format("TKT-%d-%05d", java.time.Year.now().getValue(), seq);
+	}
+
+	private TicketPriority computePriority(CreateTicketRequest req) {
+		if (req.blockingWork() && req.affectsOthers())
+			return TicketPriority.CRITICAL;
+		if (req.blockingWork())
+			return TicketPriority.HIGH;
+		if (req.affectsOthers())
+			return TicketPriority.MEDIUM;
+		return TicketPriority.LOW;
+	}
+
+	private Instant computeSlaDueAt(TicketPriority p) {
+		long hours = switch (p) {
+			case CRITICAL -> 2;
+			case HIGH -> 8;
+			case MEDIUM -> 24;
+			case LOW -> 72;
+		};
+		return Instant.now().plus(hours, ChronoUnit.HOURS);
+	}
+
+	private String buildTitle(CreateTicketRequest req) {
+		String firstLine = req.description().split("\\.")[0].trim();
+		return firstLine.length() > 100 ? firstLine.substring(0, 97) + "..." : firstLine;
+	}
+
+	private void enforceCanView(Ticket ticket, AuthenticatedUser caller) {
+		if ("CLIENT".equals(caller.role())
+				&& !ticket.getOrganization().getId().equals(caller.organizationId())) {
+			throw new AccessDeniedException("Cannot view this ticket");
+		}
+	}
+
+	private void enforceCanEdit(Ticket ticket, AuthenticatedUser caller) {
+		if ("CLIENT".equals(caller.role())
+				&& !ticket.getReporter().getId().equals(caller.userId())) {
+			throw new AccessDeniedException("Cannot edit this ticket");
+		}
+	}
 }

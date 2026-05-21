@@ -23,3 +23,15 @@ export const updateTicket = (id, body) =>
     method: 'PATCH',
     body: JSON.stringify(body),
   });
+
+export const reopenTicket = (id, reason) =>
+  apiFetch(`/tickets/${id}/reopen`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+
+export const reassignTicket = (id, technicianId) =>
+  apiFetch(`/tickets/${id}/assignee`, {
+    method: 'PATCH',
+    body: JSON.stringify({ technicianId }),
+  });

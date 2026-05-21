@@ -30,3 +30,27 @@ export const useUpdateTicket = () => {
     },
   });
 };
+
+export const useReopenTicket = (ticketId) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason) => ticketsApi.reopenTicket(ticketId, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tickets'] });
+      qc.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+
+export const useReassignTicket = (ticketId) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (technicianId) => ticketsApi.reassignTicket(ticketId, technicianId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tickets'] });
+      qc.invalidateQueries({ queryKey: ['ticket', ticketId] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};

@@ -15,33 +15,45 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TicketController {
 
-    private final TicketService ticketService;
+	private final TicketService ticketService;
 
-    @GetMapping
-    public Page<TicketSummary> list(
-            @AuthenticationPrincipal AuthenticatedUser caller,
-            @ModelAttribute TicketFilters filters,
-            Pageable pageable) {
-        return ticketService.list(caller, filters, pageable);
-    }
+	@GetMapping
+	public Page<TicketSummary> list(@AuthenticationPrincipal AuthenticatedUser caller,
+			@ModelAttribute TicketFilters filters,
+			Pageable pageable) {
+		return ticketService.list(caller, filters, pageable);
+	}
 
-    @GetMapping("/{id}")
-    public TicketDto get(@PathVariable UUID id, @AuthenticationPrincipal AuthenticatedUser caller) {
-        return ticketService.get(id, caller);
-    }
+	@GetMapping("/{id}")
+	public TicketDto get(@PathVariable UUID id,
+			@AuthenticationPrincipal AuthenticatedUser caller) {
+		return ticketService.get(id, caller);
+	}
 
-    @PostMapping
-    public TicketDto create(
-            @Valid @RequestBody CreateTicketRequest request,
-            @AuthenticationPrincipal AuthenticatedUser caller) {
-        return ticketService.create(request, caller);
-    }
+	@PostMapping
+	public TicketDto create(@Valid @RequestBody CreateTicketRequest request,
+			@AuthenticationPrincipal AuthenticatedUser caller) {
+		return ticketService.create(request, caller);
+	}
 
-    @PatchMapping("/{id}")
-    public TicketDto update(
-            @PathVariable UUID id,
-            @Valid @RequestBody UpdateTicketRequest request,
-            @AuthenticationPrincipal AuthenticatedUser caller) {
-        return ticketService.update(id, request, caller);
-    }
+	@PatchMapping("/{id}")
+	public TicketDto update(@PathVariable UUID id,
+			@Valid @RequestBody UpdateTicketRequest request,
+			@AuthenticationPrincipal AuthenticatedUser caller) {
+		return ticketService.update(id, request, caller);
+	}
+
+	@PostMapping("/{id}/reopen")
+	public TicketDto reopen(@PathVariable UUID id,
+			@Valid @RequestBody ReopenTicketRequest request,
+			@AuthenticationPrincipal AuthenticatedUser caller) {
+		return ticketService.reopen(id, request, caller);
+	}
+
+	@PatchMapping("/{id}/assignee")
+	public TicketDto reassign(@PathVariable UUID id,
+			@RequestBody AssignTicketRequest request,
+			@AuthenticationPrincipal AuthenticatedUser caller) {
+		return ticketService.reassign(id, request, caller);
+	}
 }

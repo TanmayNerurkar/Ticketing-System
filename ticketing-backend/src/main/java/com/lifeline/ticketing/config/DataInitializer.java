@@ -1,11 +1,13 @@
 package com.lifeline.ticketing.config;
 
-import com.lifeline.ticketing.user.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import com.lifeline.ticketing.user.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
         updatePasswordIfNeeded("priya@apollo.in", "password");
         updatePasswordIfNeeded("rahul@remoteit.in", "password");
         updatePasswordIfNeeded("sunita@remoteit.in", "password");
+        updatePasswordIfNeeded("admin@lifeline.local", "password");
         log.info("Test user passwords verified.");
     }
 
