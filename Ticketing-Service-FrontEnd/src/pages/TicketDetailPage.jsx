@@ -7,6 +7,8 @@ import {
   AlertTriangle,
   MessageSquare,
   Send,
+  RotateCcw,        // NEW: icon for Reopen
+  UserPlus,         // NEW: icon for Assign/Reassign
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -29,6 +31,9 @@ import Card from '../components/ui/Card';
 import StatusBadge from '../components/tickets/StatusBadge';
 import PriorityBadge from '../components/tickets/PriorityBadge';
 import CommentItem from '../components/tickets/CommentItem';
+// NEW: the two modal components
+import ReopenTicketModal from '../components/tickets/ReopenTicketModal';
+import AssignTicketModal from '../components/tickets/AssignTicketModal';
 
 function DetailRow({ label, children }) {
   return (
@@ -51,6 +56,10 @@ export default function TicketDetailPage() {
   const [isInternal, setIsInternal] = useState(false);
   const [showResolveForm, setShowResolveForm] = useState(false);
   const [resolutionNotes, setResolutionNotes] = useState('');
+
+  // NEW: state for the two modals
+  const [reopenOpen, setReopenOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
 
   const { data: ticket, isLoading, error } = useTicket(id);
   const { data: comments = [] } = useTicketComments(id);
@@ -83,6 +92,14 @@ export default function TicketDetailPage() {
       </div>
     );
   }
+
+  // NEW: derive permission flags after ticket is loaded
+  const isAdmin = user?.role === ROLES.ADMIN;
+  const isReporter = user?.id === ticket?.reporter?.id;
+  const isResolved =
+    ticket?.status === 'RESOLVED' || ticket?.status === 'CLOSED';
+  const canReopen = isResolved && (isReporter || isAdmin);
+  const canReassign = !isResolved && isAdmin;
 
   const canResolve =
     user?.role !== ROLES.CLIENT &&
@@ -148,11 +165,33 @@ export default function TicketDetailPage() {
                 {ticket.title}
               </h1>
             </div>
-            {canResolve && (
-              <Button icon={CheckCircle2} onClick={() => setShowResolveForm(true)}>
-                Mark resolved
-              </Button>
-            )}
+
+            {/* NEW: action buttons stacked next to the heading */}
+            <div className="flex items-center gap-2">
+              {canReassign && (
+                <Button
+                  variant="secondary"
+                  icon={UserPlus}
+                  onClick={() => setAssignOpen(true)}
+                >
+                  {ticket.assignee ? 'Reassign' : 'Assign'}
+                </Button>
+              )}
+              {canReopen && (
+                <Button
+                  variant="secondary"
+                  icon={RotateCcw}
+                  onClick={() => setReopenOpen(true)}
+                >
+                  Reopen ticket
+                </Button>
+              )}
+              {canResolve && (
+                <Button icon={CheckCircle2} onClick={() => setShowResolveForm(true)}>
+                  Mark resolved
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -347,6 +386,19 @@ export default function TicketDetailPage() {
           )}
         </aside>
       </div>
+
+      {/* NEW: the two modals mounted at the end so they overlay everything */}
+      <ReopenTicketModal
+        ticketId={ticket.id}
+        isOpen={reopenOpen}
+        onClose={() => setReopenOpen(false)}
+      />
+      <AssignTicketModal
+        ticketId={ticket.id}
+        currentAssigneeId={ticket.assignee?.id}
+        isOpen={assignOpen}
+        onClose={() => setAssignOpen(false)}
+      />
     </>
   );
 }
