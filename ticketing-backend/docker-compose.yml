@@ -4,8 +4,8 @@ services:
     container_name: ticketing-postgres
     environment:
       POSTGRES_DB: ticketing
-      POSTGRES_USER: dev
-      POSTGRES_PASSWORD: devpass
+      POSTGRES_USER: tanmay
+      POSTGRES_PASSWORD: tanmay123
     ports:
       - "5432:5432"
     volumes:

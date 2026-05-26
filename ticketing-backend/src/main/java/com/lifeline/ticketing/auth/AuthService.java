@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -59,6 +60,24 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ValidationException("User not found"));
         return toMeResponse(user);
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ValidationException("User not found"));
+
+        if (user.getPasswordHash() == null
+                || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new ValidationException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new ValidationException("New password must be different from the current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     private String generateToken(User user) {
